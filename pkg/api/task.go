@@ -4,6 +4,7 @@ import "net/http"
 
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
+
 	case http.MethodPost:
 		addTaskHandler(w, r)
 		return
@@ -21,9 +22,7 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 
 	default:
-		writeJSON(w, map[string]string{
-			"error": "метод не поддерживается",
-		})
+		writeError(w, http.StatusMethodNotAllowed, "метод не поддерживается")
 		return
 	}
 }

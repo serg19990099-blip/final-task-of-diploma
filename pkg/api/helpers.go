@@ -5,13 +5,19 @@ import (
 	"net/http"
 )
 
-func writeJSON(w http.ResponseWriter, data any) {
+func writeJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(data)
+	w.WriteHeader(status)
+
+	_ = json.NewEncoder(w).Encode(data)
 }
 
-func writeError(w http.ResponseWriter, err error) {
-	writeJSON(w, map[string]string{
-		"error": err.Error(),
+func writeError(w http.ResponseWriter, status int, message string) {
+	writeJSON(w, status, map[string]string{
+		"error": message,
 	})
+}
+
+func writeInternalError(w http.ResponseWriter) {
+	writeError(w, http.StatusInternalServerError, "внутренняя ошибка сервера")
 }

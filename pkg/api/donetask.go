@@ -11,38 +11,53 @@ import (
 func DoneTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
-		writeError(w, errors.New("не указан идентификатор"))
+		writeError(w, http.StatusBadRequest, "не указан идентификатор")
 		return
 	}
 
 	task, err := db.GetTask(id)
 	if err != nil {
-		writeError(w, errors.New("задача не найдена"))
+		if errors.Is(err, db.ErrTaskNotFound) {
+			writeError(w, http.StatusNotFound, "задача не найдена")
+			return
+		}
+
+		writeInternalError(w)
 		return
 	}
 
 	if task.Repeat == "" {
 		err = db.DeleteTask(id)
 		if err != nil {
-			writeError(w, err)
+			if errors.Is(err, db.ErrTaskNotFound) {
+				writeError(w, http.StatusNotFound, "задача не найдена")
+				return
+			}
+
+			writeInternalError(w)
 			return
 		}
 
-		writeJSON(w, map[string]string{})
+		writeJSON(w, http.StatusOK, map[string]string{})
 		return
 	}
 
 	next, err := NextDate(time.Now(), task.Date, task.Repeat)
 	if err != nil {
-		writeError(w, err)
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	err = db.UpdateDate(id, next)
 	if err != nil {
-		writeError(w, err)
+		if errors.Is(err, db.ErrTaskNotFound) {
+			writeError(w, http.StatusNotFound, "задача не найдена")
+			return
+		}
+
+		writeInternalError(w)
 		return
 	}
 
-	writeJSON(w, map[string]string{})
+	writeJSON(w, http.StatusOK, map[string]string{})
 }

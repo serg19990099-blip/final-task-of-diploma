@@ -13,11 +13,11 @@ type TasksResp struct {
 func TasksHandler(w http.ResponseWriter, r *http.Request) {
 	tasks, err := db.Tasks(50)
 	if err != nil {
-		writeError(w, err)
+		writeInternalError(w)
 		return
 	}
 
-	writeJSON(w, TasksResp{
+	writeJSON(w, http.StatusOK, TasksResp{
 		Tasks: tasks,
 	})
 }

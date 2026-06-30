@@ -10,15 +10,20 @@ import (
 func deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
-		writeError(w, errors.New("не указан идентификатор"))
+		writeError(w, http.StatusBadRequest, "не указан идентификатор")
 		return
 	}
 
 	err := db.DeleteTask(id)
 	if err != nil {
-		writeError(w, err)
+		if errors.Is(err, db.ErrTaskNotFound) {
+			writeError(w, http.StatusNotFound, "задача не найдена")
+			return
+		}
+
+		writeInternalError(w)
 		return
 	}
 
-	writeJSON(w, map[string]string{})
+	writeJSON(w, http.StatusOK, map[string]string{})
 }
